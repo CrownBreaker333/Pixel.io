@@ -2,130 +2,157 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <title>Epic Pixel Platformer</title>
-  <style>
-    body { margin: 0; overflow: hidden; background: #87ceeb; } /* Sky blue */
-    #gameCanvas { display: block; margin: 0 auto; background: #5c8a3f; } /* Ground green */
-    #score { font-family: sans-serif; font-size: 20px; color: white; text-align: center; }
-  </style>
+    <title>Epic Pixel Platformer</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #87ceeb;
+        }
+        #gameCanvas {
+            display: block;
+            margin: 0 auto;
+            background: #5c8a3f;
+        }
+        #score {
+            font-family: sans-serif;
+            font-size: 20px;
+            color: white;
+            text-align: center;
+            margin-top: 10px;
+        }
+    </style>
 </head>
+
 <body>
-  <div id="score">Score: 0</div>
-  <canvas id="gameCanvas" width="400" height="240"></canvas>
 
-  <!-- Hidden sprites -->
-  <img id="playerImg" src="https://i.imgur.com/2aGk7R7.png" style="display:none;">
-  <img id="coinImg" src="https://i.imgur.com/0rK4o9Z.png" style="display:none;">
-  <img id="blockImg" src="https://i.imgur.com/NJ0ZyzA.png" style="display:none;">
+<canvas id="gameCanvas" width="480" height="240"></canvas>
+<div id="score">Score: 0</div>
 
-  <script>
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-    const FLOOR_Y = canvas.height - 32;
-    const SPRITE_SIZE = 16;
-    let score = 0;
+<!-- IMAGES -->
+<img id="playerImg" src="images/player.png" style="display:none;">
+<img id="coinImg" src="images/coin.png" style="display:none;">
+<img id="blockImg" src="images/block.png" style="display:none;">
 
-    // Player
-    class Player {
-      constructor() {
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const FLOOR_Y = canvas.height - 32;
+const SPRITE_SIZE = 16;
+
+let score = 0;
+
+/* -------- PLAYER CLASS -------- */
+class Player {
+    constructor() {
         this.x = 50;
         this.y = FLOOR_Y;
         this.vy = 0;
         this.onGround = true;
         this.width = SPRITE_SIZE;
         this.height = SPRITE_SIZE;
-      }
-      update() {
-        if (!this.onGround) {
-          this.vy += 0.5; // gravity
-          this.y += this.vy;
-          if (this.y >= FLOOR_Y) {
-            this.y = FLOOR_Y;
-            this.vy = 0;
-            this.onGround = true;
-          }
-        }
-      }
-      jump() {
-        if (this.onGround) {
-          this.vy = -8;
-          this.onGround = false;
-        }
-      }
-      draw() {
-        const img = document.getElementById('playerImg');
-        ctx.drawImage(img, this.x, this.y, this.width, this.height);
-      }
     }
 
-    const player = new Player();
+    update() {
+        if (!this.onGround) {
+            this.vy += 0.5; // gravity
+            this.y += this.vy;
 
-    // Coins
-    const coins = [
-      {x: 120, y: FLOOR_Y - 16, collected: false},
-      {x: 200, y: FLOOR_Y - 16, collected: false},
-      {x: 280, y: FLOOR_Y - 16, collected: false}
-    ];
+            if (this.y >= FLOOR_Y) {
+                this.y = FLOOR_Y;
+                this.vy = 0;
+                this.onGround = true;
+            }
+        }
+    }
 
-    // Blocks
-    const blocks = [
-      {x: 160, y: FLOOR_Y - 16, width: 16, height: 16},
-      {x: 240, y: FLOOR_Y - 32, width: 16, height: 16}
-    ];
+    jump() {
+        if (this.onGround) {
+            this.vy = -8;
+            this.onGround = false;
+        }
+    }
 
-    // Input
-    const keys = {};
-    window.addEventListener('keydown', (e) => { keys[e.key] = true; });
-    window.addEventListener('keyup', (e) => { keys[e.key] = false; });
+    draw() {
+        const img = document.getElementById('playerImg');
+        ctx.drawImage(img, this.x, this.y, this.width, this.height);
+    }
+}
 
-    // Check for coin collection
-    function checkCoins() {
-      coins.forEach(coin => {
+const player = new Player();
+
+/* -------- COINS -------- */
+const coins = [
+    { x: 120, y: FLOOR_Y - 16, collected: false },
+    { x: 200, y: FLOOR_Y - 16, collected: false },
+    { x: 280, y: FLOOR_Y - 16, collected: false }
+];
+
+/* -------- BLOCKS -------- */
+const blocks = [
+    { x: 160, y: FLOOR_Y - 16, width: 16, height: 16 },
+    { x: 240, y: FLOOR_Y - 32, width: 16, height: 16 }
+];
+
+/* -------- INPUT -------- */
+const keys = {};
+
+window.addEventListener('keydown', (e) => keys[e.key] = true);
+window.addEventListener('keyup', (e) => keys[e.key] = false);
+
+/* -------- CHECK COINS -------- */
+function checkCoins() {
+    coins.forEach(coin => {
         if (!coin.collected &&
             player.x < coin.x + SPRITE_SIZE &&
             player.x + SPRITE_SIZE > coin.x &&
             player.y < coin.y + SPRITE_SIZE &&
             player.y + SPRITE_SIZE > coin.y) {
-          coin.collected = true;
-          score += 1;
-          document.getElementById('score').innerText = 'Score: ' + score;
+
+            coin.collected = true;
+            score++;
+            document.getElementById("score").innerText = "Score: " + score;
         }
-      });
-    }
+    });
+}
 
-    function gameLoop() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
+/* -------- GAME LOOP -------- */
+function gameLoop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Move player
-      if (keys['ArrowLeft'] || keys['a']) player.x -= 2;
-      if (keys['ArrowRight'] || keys['d']) player.x += 2;
-      if (keys['ArrowUp'] || keys['w'] || keys[' ']) player.jump();
+    // movement
+    if (keys["ArrowLeft"] || keys["a"]) player.x -= 2;
+    if (keys["ArrowRight"] || keys["d"]) player.x += 2;
+    if (keys["ArrowUp"] || keys["w"] || keys[" "]) player.jump();
 
-      player.update();
-      player.draw();
+    player.update();
+    player.draw();
 
-      // Draw floor
-      ctx.fillStyle = '#654321';
-      ctx.fillRect(0, FLOOR_Y + SPRITE_SIZE, canvas.width, 10);
+    // floor
+    ctx.fillStyle = "#654321";
+    ctx.fillRect(0, FLOOR_Y + SPRITE_SIZE, canvas.width, 10);
 
-      // Draw coins
-      const coinImg = document.getElementById('coinImg');
-      coins.forEach(coin => {
-        if (!coin.collected) ctx.drawImage(coinImg, coin.x, coin.y, SPRITE_SIZE, SPRITE_SIZE);
-      });
+    // coins
+    const coinImg = document.getElementById("coinImg");
+    coins.forEach(coin => {
+        if (!coin.collected)
+            ctx.drawImage(coinImg, coin.x, coin.y, SPRITE_SIZE, SPRITE_SIZE);
+    });
 
-      // Draw blocks
-      const blockImg = document.getElementById('blockImg');
-      blocks.forEach(block => {
+    // blocks
+    const blockImg = document.getElementById("blockImg");
+    blocks.forEach(block => {
         ctx.drawImage(blockImg, block.x, block.y, block.width, block.height);
-      });
+    });
 
-      checkCoins();
-      requestAnimationFrame(gameLoop);
-    }
+    checkCoins();
 
-    gameLoop();
-  </script>
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
+</script>
+
 </body>
 </html>
